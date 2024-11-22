@@ -1,0 +1,75 @@
+import pandas as pd
+from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.svm import SVC
+from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import LabelEncoder
+from sklearn.metrics import accuracy_score
+
+class Modelo:
+    def __init__(self):
+        self.df = None
+        self.models = {}
+
+    def CarregarDataset(self, path):
+        """
+        Carrega o conjunto de dados a partir de um arquivo CSV.
+        """
+        names = ['SepalLengthCm', 'SepalWidthCm', 'PetalLengthCm', 'PetalWidthCm', 'Species']
+        self.df = pd.read_csv(path, names=names)
+
+    def TratamentoDeDados(self):
+        """
+        Realiza o pré-processamento dos dados carregados.
+        """
+        # Convertendo a coluna 'Species' para valores numéricos
+        label_encoder = LabelEncoder()
+        self.df['Species'] = label_encoder.fit_transform(self.df['Species'])
+        self.label_mapping = dict(zip(label_encoder.classes_, label_encoder.transform(label_encoder.classes_)))
+        print(f"Mapeamento de rótulos: {self.label_mapping}")
+
+    def Treinamento(self):
+        """
+        Treina dois modelos de machine learning e armazena os resultados.
+        """
+        X = self.df.iloc[:, :-1]  # Características
+        y = self.df.iloc[:, -1]  # Alvo
+
+        # Dividindo em conjunto de treino e teste
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+        # Modelo 1: SVM
+        svm = SVC(kernel='linear', random_state=42)
+        svm.fit(X_train, y_train)
+        y_pred_svm = svm.predict(X_test)
+        svm_accuracy = accuracy_score(y_test, y_pred_svm)
+        self.models['SVM'] = {'model': svm, 'accuracy': svm_accuracy}
+        print(f"Acurácia do SVM: {svm_accuracy:.2f}")
+
+        # Modelo 2: Regressão Logística
+        logistic_regression = LogisticRegression(random_state=42, max_iter=200)
+        logistic_regression.fit(X_train, y_train)
+        y_pred_lr = logistic_regression.predict(X_test)
+        lr_accuracy = accuracy_score(y_test, y_pred_lr)
+        self.models['Logistic Regression'] = {'model': logistic_regression, 'accuracy': lr_accuracy}
+        print(f"Acurácia da Regressão Logística: {lr_accuracy:.2f}")
+
+    def Teste(self):
+        """
+        Exibe o desempenho de cada modelo treinado.
+        """
+        for model_name, info in self.models.items():
+            print(f"{model_name} - Acurácia: {info['accuracy']:.2f}")
+
+    def Train(self):
+        """
+        Fluxo principal do treinamento.
+        """
+        self.CarregarDataset("iris.data")  # Carrega o dataset
+        self.TratamentoDeDados()          # Trata os dados
+        self.Treinamento()                # Treina os modelos
+        self.Teste()                      # Avalia os modelos
+
+# Execução
+if __name__ == "__main__":
+    modelo = Modelo()
+    modelo.Train()
